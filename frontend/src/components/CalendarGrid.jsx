@@ -14,26 +14,26 @@ const CalendarGrid = () => {
   ]
 
   const statusColors = {
-    green: 'bg-eco-green-500',
-    yellow: 'bg-yellow-400',
-    red: 'bg-red-400',
-    gray: 'bg-gray-200',
+    green: 'bg-eco-green-500 dark:bg-eco-green-400',
+    yellow: 'bg-yellow-400 dark:bg-yellow-500',
+    red: 'bg-red-400 dark:bg-red-500',
+    gray: 'bg-gray-200 dark:bg-gray-600',
   }
 
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">December 2024</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">December 2024</h2>
         <div className="flex space-x-2">
-          <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">← Prev</button>
-          <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">Next →</button>
+          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg transition-colors duration-300">← Prev</button>
+          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg transition-colors duration-300">Next →</button>
         </div>
       </div>
 
       {/* Weekday Headers */}
       <div className="grid grid-cols-7 gap-2 mb-2">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="text-center font-semibold text-gray-600 text-sm py-2">
+          <div key={day} className="text-center font-semibold text-gray-600 dark:text-gray-400 text-sm py-2 transition-colors duration-300">
             {day}
           </div>
         ))}

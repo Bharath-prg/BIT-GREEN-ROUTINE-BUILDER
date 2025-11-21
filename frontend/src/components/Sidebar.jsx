@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import Logo from './Logo'
 
 const Sidebar = () => {
   const location = useLocation()
@@ -15,15 +16,11 @@ const Sidebar = () => {
   ]
 
   return (
-    <aside className="w-64 bg-white h-screen fixed left-0 top-0 shadow-lg flex flex-col">
+    <aside className="w-64 bg-white dark:bg-gray-800 h-screen fixed left-0 top-0 shadow-lg flex flex-col z-20 transition-colors duration-300 border-r border-gray-200 dark:border-gray-700">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <Link to="/dashboard" className="flex items-center space-x-2">
-          <span className="text-3xl">🌱</span>
-          <div>
-            <h1 className="text-xl font-bold text-eco-green-700">Green Routine</h1>
-            <p className="text-xs text-gray-500">Build Better Habits</p>
-          </div>
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <Link to="/dashboard">
+          <Logo size="md" showText={true} />
         </Link>
       </div>
 
@@ -36,8 +33,8 @@ const Sidebar = () => {
                 to={item.path}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition duration-200 ${
                   location.pathname === item.path
-                    ? 'bg-eco-green-100 text-eco-green-700 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-eco-green-100 dark:bg-eco-green-900/30 text-eco-green-700 dark:text-eco-green-400 font-semibold'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <span className="text-xl">{item.icon}</span>
@@ -49,11 +46,11 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="bg-eco-green-50 rounded-lg p-4">
-          <p className="text-sm font-semibold text-eco-green-700">🌍 Eco Score</p>
-          <p className="text-2xl font-bold text-eco-green-600">1,234</p>
-          <p className="text-xs text-gray-600">Keep up the great work!</p>
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
+        <div className="bg-eco-green-50 dark:bg-eco-green-900/30 rounded-lg p-4 transition-colors duration-300">
+          <p className="text-sm font-semibold text-eco-green-700 dark:text-eco-green-400 transition-colors duration-300">🌍 Eco Score</p>
+          <p className="text-2xl font-bold text-eco-green-600 dark:text-eco-green-400 transition-colors duration-300">1,234</p>
+          <p className="text-xs text-gray-600 dark:text-gray-300 transition-colors duration-300">Keep up the great work!</p>
         </div>
       </div>
     </aside>

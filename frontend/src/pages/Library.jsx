@@ -57,8 +57,8 @@ const Library = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Eco-Action Library</h1>
-        <p className="text-gray-600 mt-1">Browse curated sustainability tips and actions</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-300">Eco-Action Library</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-300">Browse curated sustainability tips and actions</p>
       </div>
 
       {/* Category Filter */}
@@ -70,8 +70,8 @@ const Library = () => {
               onClick={() => setActiveCategory(cat.id)}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 activeCategory === cat.id
-                  ? 'bg-eco-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-eco-green-600 dark:bg-eco-green-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               <span className="mr-2">{cat.icon}</span>
