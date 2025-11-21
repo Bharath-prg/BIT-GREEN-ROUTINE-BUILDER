@@ -6,7 +6,10 @@ import DarkModeToggle from '../components/DarkModeToggle'
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-eco-green-50 via-white to-eco-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative transition-colors duration-300">
+    <div className="min-h-screen relative">
+      {/* Background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-eco-green-50 via-white to-eco-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300 z-0"></div>
+      
       {/* Eco Doodles Background */}
       <EcoDoodles variant="landing" />
       
