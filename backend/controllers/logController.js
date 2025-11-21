@@ -44,8 +44,16 @@ const updateEcoScore = async (userId, habitId, oldStatus, newStatus) => {
 }
 
 // Helper function to calculate current streak
+// Streak = consecutive days where ALL active habits were completed
 const calculateStreak = async (userId) => {
   try {
+    // Get all active habits for the user
+    const activeHabits = await Habit.find({ userId, archived: false })
+    if (activeHabits.length === 0) return 0
+
+    const habitIds = activeHabits.map(h => h._id.toString())
+
+    // Get all 'done' logs sorted by date
     const logs = await HabitLog.find({ 
       userId, 
       status: 'done' 
@@ -53,10 +61,30 @@ const calculateStreak = async (userId) => {
 
     if (logs.length === 0) return 0
 
-    // Group logs by date
-    const dateSet = new Set()
-    logs.forEach(log => dateSet.add(log.date))
-    const uniqueDates = Array.from(dateSet).sort().reverse()
+    // Group logs by date and count habits completed per day
+    const dateHabits = {}
+    logs.forEach(log => {
+      const date = log.date
+      if (!dateHabits[date]) {
+        dateHabits[date] = new Set()
+      }
+      dateHabits[date].add(log.habitId.toString())
+    })
+
+    // Get dates where ALL habits were completed
+    const completeDates = []
+    for (const [date, completedHabitIds] of Object.entries(dateHabits)) {
+      // Check if all active habits were completed on this date
+      const allCompleted = habitIds.every(habitId => completedHabitIds.has(habitId))
+      if (allCompleted) {
+        completeDates.push(date)
+      }
+    }
+
+    if (completeDates.length === 0) return 0
+
+    // Sort dates descending
+    completeDates.sort().reverse()
 
     // Calculate streak from today backwards
     const today = new Date()
@@ -66,19 +94,20 @@ const calculateStreak = async (userId) => {
     let streak = 0
     let currentDate = new Date(today)
 
-    for (let i = 0; i < uniqueDates.length; i++) {
+    // Start checking from today or yesterday if today not complete
+    if (completeDates[0] !== todayStr) {
+      // Today not complete yet, start from yesterday
+      currentDate.setDate(currentDate.getDate() - 1)
+    }
+
+    // Count consecutive days
+    for (let i = 0; i < completeDates.length; i++) {
       const checkDateStr = currentDate.toISOString().split('T')[0]
       
-      if (uniqueDates[i] === checkDateStr) {
+      if (completeDates[i] === checkDateStr) {
         streak++
         currentDate.setDate(currentDate.getDate() - 1)
       } else {
-        // Check if we're looking at today and there's no log yet
-        if (checkDateStr === todayStr && uniqueDates[i] < todayStr) {
-          // Today not logged yet, check yesterday
-          currentDate.setDate(currentDate.getDate() - 1)
-          continue
-        }
         break
       }
     }

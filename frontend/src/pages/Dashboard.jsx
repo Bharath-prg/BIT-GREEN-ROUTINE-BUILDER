@@ -84,20 +84,34 @@ const Dashboard = () => {
     try {
       const today = formatDateForAPI(new Date())
 
-      await api.post('/logs', {
+      const response = await api.post('/logs', {
         habitId,
         date: today,
         status: status
       })
 
-      // Update local state
+      // Update local state immediately
       setTodayLogs(prev => ({
         ...prev,
         [habitId]: status
       }))
 
-      // Refresh stats
-      fetchDashboardData()
+      // Update eco score and streak from response
+      if (response.data.streak !== undefined) {
+        setStats(prev => ({
+          ...prev,
+          currentStreak: response.data.streak
+        }))
+      }
+
+      // Refresh user data to get updated eco score
+      const userRes = await api.get('/auth/me')
+      setUser(userRes.data.data)
+      setStats(prev => ({
+        ...prev,
+        ecoScore: userRes.data.data.ecoScoreTotal || 0
+      }))
+
     } catch (error) {
       console.error('Error logging habit:', error)
       alert('Failed to log habit. Please try again.')
@@ -137,7 +151,7 @@ const Dashboard = () => {
         <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
           <p className="text-sm opacity-90">Active Habits</p>
           <p className="text-4xl font-bold mt-2">{stats.activeHabits}</p>
-          <p className="text-xs mt-1 opacity-75">{Object.values(todayLogs).filter(s => s === 'done').length} completed today</p>
+          <p className="text-xs mt-1 opacity-75">{Object.values(todayLogs).filter(s => s === 'done').length} of {todayHabits.length} completed today</p>
         </div>
 
         <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
