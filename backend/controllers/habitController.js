@@ -19,9 +19,9 @@ export const createHabit = async (req, res) => {
       userId: req.user.id,
       title,
       category,
-      frequency: frequency || 'daily',
+      frequency: frequency || 'Daily',
       reminderTime: reminderTime || '09:00',
-      impactLevel: impactLevel || 'medium'
+      impactLevel: impactLevel || 'Medium'
     })
 
     res.status(201).json({

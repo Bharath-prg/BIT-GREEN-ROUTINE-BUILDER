@@ -11,18 +11,35 @@ const challengeProgressSchema = new mongoose.Schema({
     ref: 'Challenge',
     required: true
   },
+  habitId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Habit',
+    required: true
+  },
+  startDate: {
+    type: String,
+    required: true
+  },
   completedDays: {
     type: Number,
     default: 0
   },
-  lastUpdated: {
+  status: {
+    type: String,
+    enum: ['active', 'completed', 'failed'],
+    default: 'active'
+  },
+  lastCompletedDate: {
+    type: String
+  },
+  createdAt: {
     type: Date,
     default: Date.now
   }
 })
 
-// Compound index for user-challenge combination
-challengeProgressSchema.index({ userId: 1, challengeId: 1 }, { unique: true })
+// Compound index for user-challenge-habit combination
+challengeProgressSchema.index({ userId: 1, challengeId: 1, habitId: 1 }, { unique: true })
 
 const ChallengeProgress = mongoose.model('ChallengeProgress', challengeProgressSchema)
 

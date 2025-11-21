@@ -1,15 +1,47 @@
 import React, { useState, useEffect } from 'react'
+import api from '../utils/api'
 
 const Profile = () => {
   const [user, setUser] = useState(null)
+  const [badges, setBadges] = useState([])
+  const [stats, setStats] = useState({
+    totalHabits: 0,
+    ecoScore: 0,
+    memberSince: null
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get user data from localStorage
-    const userData = localStorage.getItem('user')
-    if (userData) {
-      setUser(JSON.parse(userData))
-    }
+    fetchProfileData()
   }, [])
+
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch user profile
+      const userRes = await api.get('/auth/me')
+      setUser(userRes.data.data)
+
+      // Fetch habits count
+      const habitsRes = await api.get('/habits')
+      const totalHabits = (habitsRes.data.data || []).filter(h => !h.archived).length
+
+      setStats({
+        totalHabits,
+        ecoScore: userRes.data.data.ecoScoreTotal || 0,
+        memberSince: new Date(userRes.data.data.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      })
+
+      // TODO: Fetch badges from backend when badge endpoint is ready
+      // For now using empty array
+      setBadges([])
+    } catch (error) {
+      console.error('Error fetching profile data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Get initials from user name
   const getInitials = (name) => {
@@ -19,6 +51,14 @@ const Profile = () => {
       .map((n) => n[0])
       .join('')
       .toUpperCase()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-eco-green-600"></div>
+      </div>
+    )
   }
 
   return (
@@ -51,19 +91,20 @@ const Profile = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">Member Since</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white mt-2 transition-colors duration-300">Jan 2024</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-white mt-2 transition-colors duration-300">{stats.memberSince || 'N/A'}</p>
         </div>
         <div className="card text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">Total Habits</p>
-          <p className="text-xl font-bold text-eco-green-600 dark:text-eco-green-400 mt-2">12</p>
+          <p className="text-xl font-bold text-eco-green-600 dark:text-eco-green-400 mt-2">{stats.totalHabits}</p>
         </div>
         <div className="card text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">Badges Earned</p>
-          <p className="text-xl font-bold text-purple-600 dark:text-purple-400 mt-2">8</p>
+          <p className="text-xl font-bold text-purple-600 dark:text-purple-400 mt-2">{badges.length}</p>
         </div>
-        <div className="card text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Eco Score</p>
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-2">1,234</p>
+        <div className="card bg-gradient-to-br from-eco-green-500 to-eco-green-600 text-white text-center">
+          <p className="text-sm opacity-90">🌍 Eco Score</p>
+          <p className="text-3xl font-bold mt-2">{stats.ecoScore.toLocaleString()}</p>
+          <p className="text-xs mt-1 opacity-75">Keep up the great work!</p>
         </div>
       </div>
 
