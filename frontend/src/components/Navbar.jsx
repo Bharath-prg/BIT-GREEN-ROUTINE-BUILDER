@@ -5,7 +5,7 @@ import api from '../utils/api'
 
 const Navbar = () => {
   const [user, setUser] = useState(null)
-  const [streak, setStreak] = useState(0)
+  const [activeDays, setActiveDays] = useState(0)
 
   useEffect(() => {
     fetchUserData()
@@ -15,8 +15,17 @@ const Navbar = () => {
     try {
       const userRes = await api.get('/auth/me')
       setUser(userRes.data.data)
-      // TODO: Fetch actual streak from backend
-      setStreak(0)
+      
+      // Fetch total active days
+      try {
+        const logsRes = await api.get('/logs')
+        const logs = logsRes.data.data || []
+        // Count unique dates where user logged habits
+        const uniqueDates = new Set(logs.map(log => log.date))
+        setActiveDays(uniqueDates.size)
+      } catch (error) {
+        console.error('Error fetching active days:', error)
+      }
     } catch (error) {
       console.error('Error fetching user data:', error)
     }
@@ -50,12 +59,12 @@ const Navbar = () => {
         {/* Dark Mode Toggle */}
         <DarkModeToggle />
         
-        {/* Streak Info */}
-        <div className="flex items-center space-x-2 bg-orange-50 dark:bg-orange-900/30 px-4 py-2 rounded-lg transition-colors duration-300">
-          <span className="text-2xl">🔥</span>
+        {/* Active Days Info */}
+        <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg transition-colors duration-300">
+          <span className="text-2xl">📅</span>
           <div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">Current Streak</p>
-            <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{streak} Days</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Total Active Days</p>
+            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{activeDays} Days</p>
           </div>
         </div>
 
