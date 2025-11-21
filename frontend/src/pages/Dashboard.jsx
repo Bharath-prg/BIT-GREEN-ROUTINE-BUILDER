@@ -1,12 +1,22 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 const Dashboard = () => {
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-300">Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-300">Welcome back! Heres your eco-progress overview</p>
+        <p className="text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-300">Welcome back, {user?.name || 'User'}! Here's your eco-progress overview</p>
       </div>
 
       {/* Stats Grid */}

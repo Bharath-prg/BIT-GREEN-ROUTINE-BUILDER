@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import EcoDoodles from '../components/EcoDoodles'
 import Logo from '../components/Logo'
 import DarkModeToggle from '../components/DarkModeToggle'
+import { authAPI } from '../utils/api'
 
 const Signup = () => {
   const navigate = useNavigate()
@@ -12,16 +13,49 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
   })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: Implement signup logic with API
+    setError('')
+    
+    // Client-side validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!')
+      setError('Passwords do not match!')
       return
     }
-    console.log('Signup:', formData)
-    navigate('/dashboard')
+    
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long')
+      return
+    }
+    
+    setLoading(true)
+    
+    try {
+      const response = await authAPI.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      })
+      
+      const { accessToken, refreshToken, user } = response.data.data;
+      
+      // Store tokens in localStorage
+      localStorage.setItem('token', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      // Navigate to dashboard
+      navigate('/dashboard')
+    } catch (err) {
+      const message = err.response?.data?.message || 'Signup failed. Please try again.'
+      setError(message)
+      console.error('Signup error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChange = (e) => {
@@ -110,6 +144,12 @@ const Signup = () => {
               />
             </div>
 
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             <div className="flex items-start">
               <input type="checkbox" className="w-4 h-4 mt-1 text-eco-green-600 rounded" required />
               <span className="ml-2 text-sm text-gray-600">
@@ -120,8 +160,8 @@ const Signup = () => {
               </span>
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              Create Account
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 

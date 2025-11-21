@@ -1,6 +1,26 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 const Profile = () => {
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
+  }, [])
+
+  // Get initials from user name
+  const getInitials = (name) => {
+    if (!name) return 'U'
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -13,11 +33,11 @@ const Profile = () => {
       <div className="card">
         <div className="flex items-start space-x-6">
           <div className="w-24 h-24 bg-eco-green-200 dark:bg-eco-green-700 rounded-full flex items-center justify-center transition-colors duration-300">
-            <span className="text-4xl font-bold text-eco-green-700 dark:text-eco-green-200">JD</span>
+            <span className="text-4xl font-bold text-eco-green-700 dark:text-eco-green-200">{user ? getInitials(user.name) : 'U'}</span>
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">John Doe</h2>
-            <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">john.doe@example.com</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">{user?.name || 'User'}</h2>
+            <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">{user?.email || 'user@example.com'}</p>
             <div className="flex space-x-2 mt-3">
               <span className="badge badge-success">Eco Warrior</span>
               <span className="badge bg-orange-100 text-orange-800">7-Day Streak</span>
