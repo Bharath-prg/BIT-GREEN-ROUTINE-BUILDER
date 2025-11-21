@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import EcoDoodles from '../components/EcoDoodles'
 import Logo from '../components/Logo'
 import DarkModeToggle from '../components/DarkModeToggle'
+import { authAPI } from '../utils/api'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -10,12 +11,32 @@ const Login = () => {
     email: '',
     password: '',
   })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: Implement login logic with API
-    console.log('Login:', formData)
-    navigate('/dashboard')
+    setError('')
+    setLoading(true)
+    
+    try {
+      const response = await authAPI.login(formData)
+      const { accessToken, refreshToken, user } = response.data.data;
+      
+      // Store tokens in localStorage
+      localStorage.setItem('token', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      // Navigate to dashboard
+      navigate('/dashboard')
+    } catch (err) {
+      const message = err.response?.data?.message || 'Login failed. Please try again.'
+      setError(message)
+      console.error('Login error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChange = (e) => {
@@ -84,8 +105,14 @@ const Login = () => {
               </a>
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              Sign In
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 
