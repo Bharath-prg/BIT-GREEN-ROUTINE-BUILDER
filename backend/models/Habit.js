@@ -14,13 +14,12 @@ const habitSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['water', 'energy', 'waste', 'plastic', 'travel'],
-    lowercase: true
+    enum: ['Water', 'Energy', 'Waste', 'Food', 'Transport']
   },
   frequency: {
     type: String,
-    default: 'daily',
-    enum: ['daily', 'weekly', 'custom']
+    default: 'Daily',
+    enum: ['Daily', 'Weekly', 'Monthly']
   },
   reminderTime: {
     type: String,
@@ -28,8 +27,8 @@ const habitSchema = new mongoose.Schema({
   },
   impactLevel: {
     type: String,
-    default: 'medium',
-    enum: ['low', 'medium', 'high']
+    default: 'Medium',
+    enum: ['Low', 'Medium', 'High']
   },
   archived: {
     type: Boolean,

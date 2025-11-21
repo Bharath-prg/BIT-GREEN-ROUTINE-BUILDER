@@ -1,13 +1,15 @@
 import Challenge from '../models/Challenge.js'
 import ChallengeProgress from '../models/ChallengeProgress.js'
+import Habit from '../models/Habit.js'
+import Badge from '../models/Badge.js'
 
 // @desc    Get all challenges
 // @route   GET /api/challenges
 // @access  Private
 export const getChallenges = async (req, res) => {
   try {
-    const challenges = await Challenge.find()
-      .sort({ createdAt: -1 })
+    const challenges = await Challenge.find({ isActive: true })
+      .sort({ durationDays: 1 })
       .select('-__v')
 
     res.status(200).json({
@@ -51,22 +53,21 @@ export const getChallengeById = async (req, res) => {
   }
 }
 
-// @desc    Join a challenge
+// @desc    Join a challenge for specific habit
 // @route   POST /api/challenges/join
 // @access  Private
 export const joinChallenge = async (req, res) => {
   try {
-    const { challengeId } = req.body
+    const { challengeId, habitId } = req.body
 
-    if (!challengeId) {
+    if (!challengeId || !habitId) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide challengeId'
+        message: 'Please provide challengeId and habitId'
       })
     }
 
     const challenge = await Challenge.findById(challengeId)
-
     if (!challenge) {
       return res.status(404).json({
         success: false,
@@ -74,29 +75,48 @@ export const joinChallenge = async (req, res) => {
       })
     }
 
-    // Check if user already joined
-    if (challenge.participants.includes(req.user.id)) {
-      return res.status(400).json({
+    // Verify habit belongs to user
+    const habit = await Habit.findOne({ _id: habitId, userId: req.user.id })
+    if (!habit) {
+      return res.status(404).json({
         success: false,
-        message: 'You have already joined this challenge'
+        message: 'Habit not found'
       })
     }
 
-    // Add user to participants
-    challenge.participants.push(req.user.id)
-    await challenge.save()
-
-    // Create progress tracker
-    await ChallengeProgress.create({
+    // Check if already joined
+    const existing = await ChallengeProgress.findOne({
       userId: req.user.id,
-      challengeId: challenge._id,
-      completedDays: 0
+      challengeId,
+      habitId,
+      status: 'active'
     })
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'Already joined this challenge for this habit'
+      })
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    const progress = await ChallengeProgress.create({
+      userId: req.user.id,
+      challengeId,
+      habitId,
+      startDate: today,
+      completedDays: 0,
+      status: 'active'
+    })
+
+    const populated = await ChallengeProgress.findById(progress._id)
+      .populate('challengeId')
+      .populate('habitId', 'title category')
 
     res.status(200).json({
       success: true,
       message: 'Successfully joined challenge',
-      data: challenge
+      data: populated
     })
   } catch (error) {
     console.error('Join challenge error:', error)
@@ -113,8 +133,9 @@ export const joinChallenge = async (req, res) => {
 export const getChallengeProgress = async (req, res) => {
   try {
     const progress = await ChallengeProgress.find({ userId: req.user.id })
-      .populate('challengeId', 'title description durationDays')
-      .sort({ lastUpdated: -1 })
+      .populate('challengeId')
+      .populate('habitId', 'title category impactLevel')
+      .sort({ createdAt: -1 })
 
     res.status(200).json({
       success: true,
@@ -150,7 +171,6 @@ export const updateChallengeProgress = async (req, res) => {
     }
 
     progress.completedDays = completedDays
-    progress.lastUpdated = Date.now()
     await progress.save()
 
     res.status(200).json({
@@ -172,7 +192,7 @@ export const updateChallengeProgress = async (req, res) => {
 // @access  Private
 export const createChallenge = async (req, res) => {
   try {
-    const { title, description, durationDays, category } = req.body
+    const { title, description, durationDays, category, type, icon } = req.body
 
     if (!title || !description) {
       return res.status(400).json({
@@ -181,17 +201,13 @@ export const createChallenge = async (req, res) => {
       })
     }
 
-    const startDate = new Date()
-    const endDate = new Date()
-    endDate.setDate(endDate.getDate() + (durationDays || 7))
-
     const challenge = await Challenge.create({
       title,
       description,
       durationDays: durationDays || 7,
-      startDate,
-      endDate,
-      category: category || 'general'
+      category: category || 'All',
+      type: type || 'streak',
+      icon: icon || '🔥'
     })
 
     res.status(201).json({

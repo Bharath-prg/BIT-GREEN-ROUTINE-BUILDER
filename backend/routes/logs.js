@@ -3,7 +3,8 @@ import {
   createLog,
   getLogsByDate,
   getLogsByHabit,
-  getAllLogs
+  getAllLogs,
+  getCurrentStreak
 } from '../controllers/logController.js'
 import protect from '../middleware/authMiddleware.js'
 
@@ -16,6 +17,7 @@ router.route('/')
   .post(createLog)
   .get(getAllLogs)
 
+router.get('/streak', getCurrentStreak)
 router.get('/:date', getLogsByDate)
 router.get('/habit/:habitId', getLogsByHabit)
 
