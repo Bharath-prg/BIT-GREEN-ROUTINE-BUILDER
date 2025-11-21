@@ -5,7 +5,7 @@ import { formatDateForAPI } from '../utils/helpers'
 const Dashboard = () => {
   const [user, setUser] = useState(null)
   const [stats, setStats] = useState({
-    ecoScore: 0,
+    dailyEcoScore: 0,
     currentStreak: 0,
     activeHabits: 0,
     activeChallenges: 0
@@ -39,7 +39,9 @@ const Dashboard = () => {
       const logs = logsRes.data.data || []
       const logsMap = {}
       logs.forEach(log => {
-        logsMap[log.habitId] = log.status
+        // Handle both populated and non-populated habitId
+        const habitIdStr = typeof log.habitId === 'object' ? log.habitId._id : log.habitId
+        logsMap[habitIdStr] = log.status
       })
       setTodayLogs(logsMap)
 
@@ -61,13 +63,24 @@ const Dashboard = () => {
         console.error('Error fetching streak:', error)
       }
 
+      // Fetch daily eco score
+      let dailyScore = 0
+      try {
+        const dailyScoreRes = await api.get(`/logs/daily-score/${today}`)
+        dailyScore = dailyScoreRes.data.data?.dailyScore ?? 0
+        console.log('Daily eco score fetched:', dailyScore, 'for date:', today)
+      } catch (error) {
+        console.error('Error fetching daily eco score:', error)
+        dailyScore = 0
+      }
+
       // Calculate stats
       const completedToday = logs.filter(l => l.status === 'done').length
       const activeHabitsCount = habits.filter(h => !h.archived).length
       const activeChallengesCount = userChallenges.length
 
       setStats({
-        ecoScore: userRes.data.data.ecoScoreTotal || 0,
+        dailyEcoScore: dailyScore,
         currentStreak: streak,
         activeHabits: activeHabitsCount,
         activeChallenges: activeChallengesCount
@@ -96,7 +109,7 @@ const Dashboard = () => {
         [habitId]: status
       }))
 
-      // Update eco score and streak from response
+      // Update streak from response
       if (response.data.streak !== undefined) {
         setStats(prev => ({
           ...prev,
@@ -104,13 +117,22 @@ const Dashboard = () => {
         }))
       }
 
-      // Refresh user data to get updated eco score
-      const userRes = await api.get('/auth/me')
-      setUser(userRes.data.data)
-      setStats(prev => ({
-        ...prev,
-        ecoScore: userRes.data.data.ecoScoreTotal || 0
-      }))
+      // Refresh daily eco score
+      try {
+        const dailyScoreRes = await api.get(`/logs/daily-score/${today}`)
+        const newDailyScore = dailyScoreRes.data.data?.dailyScore ?? 0
+        setStats(prev => ({
+          ...prev,
+          dailyEcoScore: newDailyScore
+        }))
+      } catch (error) {
+        console.error('Error fetching daily eco score:', error)
+        // If error, set to 0 to be safe
+        setStats(prev => ({
+          ...prev,
+          dailyEcoScore: 0
+        }))
+      }
 
     } catch (error) {
       console.error('Error logging habit:', error)
@@ -138,8 +160,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card bg-gradient-to-br from-eco-green-500 to-eco-green-600 text-white">
           <p className="text-sm opacity-90">🌍 Eco Score</p>
-          <p className="text-4xl font-bold mt-2">{stats.ecoScore.toLocaleString()}</p>
-          <p className="text-xs mt-1 opacity-75">Keep up the great work!</p>
+          <p className="text-4xl font-bold mt-2">{stats.dailyEcoScore.toLocaleString()}</p>
+          <p className="text-xs mt-1 opacity-75">Today's impact points!</p>
         </div>
 
         <div className="card bg-gradient-to-br from-orange-500 to-orange-600 text-white">

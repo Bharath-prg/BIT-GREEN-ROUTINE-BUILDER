@@ -19,6 +19,8 @@ const HabitCard = ({ habit, onDelete, onUpdate }) => {
     Waste: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     Food: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
     Transport: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    Plastic: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    Greenery: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
   }
 
   const categoryIcons = {
@@ -27,6 +29,8 @@ const HabitCard = ({ habit, onDelete, onUpdate }) => {
     Waste: '♻️',
     Food: '🍃',
     Transport: '🚗',
+    Plastic: '🛍️',
+    Greenery: '🌱',
   }
 
   const fetchHabitDetails = async () => {

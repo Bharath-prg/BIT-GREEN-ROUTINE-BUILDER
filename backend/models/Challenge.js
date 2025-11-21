@@ -21,7 +21,7 @@ const challengeSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Water', 'Energy', 'Waste', 'Food', 'Transport', 'All'],
+    enum: ['Water', 'Energy', 'Waste', 'Food', 'Transport', 'Plastic', 'Greenery', 'All'],
     default: 'All'
   },
   icon: {

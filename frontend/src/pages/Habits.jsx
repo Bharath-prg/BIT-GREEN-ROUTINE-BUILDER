@@ -90,7 +90,7 @@ const Habits = () => {
 
       {/* Filter Tabs */}
       <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700">
-        {['All', 'Water', 'Energy', 'Waste', 'Food', 'Transport'].map((tab) => (
+        {['All', 'Water', 'Energy', 'Waste', 'Food', 'Transport', 'Plastic', 'Greenery'].map((tab) => (
           <button
             key={tab}
             onClick={() => setFilterCategory(tab)}
@@ -149,6 +149,8 @@ const Habits = () => {
                   <option>Waste</option>
                   <option>Food</option>
                   <option>Transport</option>
+                  <option>Plastic</option>
+                  <option>Greenery</option>
                 </select>
               </div>
               <div>

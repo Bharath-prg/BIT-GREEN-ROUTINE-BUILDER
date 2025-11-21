@@ -312,3 +312,52 @@ export const getCurrentStreak = async (req, res) => {
     })
   }
 }
+
+// @desc    Get daily eco score for a specific date
+// @route   GET /api/logs/daily-score/:date
+// @access  Private
+export const getDailyEcoScore = async (req, res) => {
+  try {
+    const { date } = req.params
+    const targetDate = date || new Date().toISOString().split('T')[0]
+    
+    console.log(`[getDailyEcoScore] Fetching score for user ${req.user.id} on date ${targetDate}`)
+    
+    // Get all logs for the specific date with status 'done'
+    const doneLogs = await HabitLog.find({
+      userId: req.user.id,
+      date: targetDate,
+      status: 'done'
+    }).populate('habitId', 'impactLevel')
+
+    console.log(`[getDailyEcoScore] Found ${doneLogs.length} completed habits`)
+
+    // Calculate daily score - only from completed habits
+    let dailyScore = 0
+    doneLogs.forEach(log => {
+      if (log.habitId && log.habitId.impactLevel) {
+        const points = IMPACT_POINTS[log.habitId.impactLevel] || 0
+        dailyScore += points
+        console.log(`[getDailyEcoScore] Adding ${points} points from ${log.habitId.impactLevel} impact habit`)
+      }
+    })
+
+    console.log(`[getDailyEcoScore] Total daily score: ${dailyScore}`)
+
+    // If no habits were completed (all missed or none logged), score should be 0
+    res.status(200).json({
+      success: true,
+      data: { 
+        date: targetDate,
+        dailyScore: dailyScore, // This will be 0 if no 'done' logs exist
+        completedHabits: doneLogs.length
+      }
+    })
+  } catch (error) {
+    console.error('Get daily eco score error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Server error calculating daily eco score'
+    })
+  }
+}

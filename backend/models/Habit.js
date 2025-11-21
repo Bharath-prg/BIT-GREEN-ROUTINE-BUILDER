@@ -14,7 +14,7 @@ const habitSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Water', 'Energy', 'Waste', 'Food', 'Transport']
+    enum: ['Water', 'Energy', 'Waste', 'Food', 'Transport', 'Plastic', 'Greenery']
   },
   frequency: {
     type: String,

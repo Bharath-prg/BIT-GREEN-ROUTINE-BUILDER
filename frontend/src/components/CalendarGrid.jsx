@@ -200,6 +200,8 @@ const CalendarGrid = ({ logs = [] }) => {
                             {habit.category === 'Transport' && '🚗'}
                             {habit.category === 'Food' && '🍃'}
                             {habit.category === 'Waste' && '♻️'}
+                            {habit.category === 'Plastic' && '🛍️'}
+                            {habit.category === 'Greenery' && '🌱'}
                             {habit.category === 'Unknown' && '📌'}
                             {' '}{habit.category}
                           </span>
