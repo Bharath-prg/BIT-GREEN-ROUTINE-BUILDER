@@ -12,6 +12,7 @@ import Library from "../pages/Library";
 import EcoStore from "../pages/EcoStore";
 import Profile from "../pages/Profile";
 import Notifications from "../pages/Notifications";
+import Leaderboard from "../pages/Leaderboard";
 
 // Auth Pages
 import Login from "../auth/Login";
@@ -40,6 +41,7 @@ const AppRouter = () => {
             <Route path="/eco-store" element={<EcoStore />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
           </Route>
           {/* Analytics Page */}
           <Route element={<MainLayout />}>

@@ -25,6 +25,7 @@ const Sidebar = () => {
     { path: "/habits", icon: "✅", label: "My Habits" },
     { path: "/calendar", icon: "📅", label: "Calendar" },
     { path: "/challenges", icon: "🏆", label: "Challenges" },
+    { path: "/leaderboard", icon: "🥇", label: "Leaderboard" },
     { path: "/analytics", icon: "📈", label: "Analytics" },
     { path: "/library", icon: "📚", label: "Eco Library" },
     { path: "/eco-store", icon: "🌳", label: "Carbon Offset" },

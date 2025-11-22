@@ -171,11 +171,36 @@ export const updateChallengeProgress = async (req, res) => {
     }
 
     progress.completedDays = completedDays;
+    // If challenge is completed, update status and award badge
+    const challenge = await Challenge.findById(progress.challengeId);
+    let badgeAwarded = false;
+    if (
+      challenge &&
+      completedDays >= challenge.durationDays &&
+      progress.status !== "completed"
+    ) {
+      progress.status = "completed";
+      // Award 'challenge-winner' badge if not already awarded
+      const existingBadge = await Badge.findOne({
+        userId: req.user.id,
+        type: "challenge-winner",
+      });
+      if (!existingBadge) {
+        await Badge.create({
+          userId: req.user.id,
+          type: "challenge-winner",
+          value: 1,
+        });
+        badgeAwarded = true;
+      }
+    }
     await progress.save();
 
     res.status(200).json({
       success: true,
-      message: "Progress updated successfully",
+      message: badgeAwarded
+        ? "Progress updated and badge awarded!"
+        : "Progress updated successfully",
       data: progress,
     });
   } catch (error) {

@@ -7,6 +7,7 @@ import {
   updateChallengeProgress,
   createChallenge,
 } from "../controllers/challengeController.js";
+import { getChallengeLeaderboard } from "../controllers/leaderboardController.js";
 import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -15,6 +16,7 @@ const router = express.Router();
 router.use(protect);
 
 router.route("/").get(getChallenges).post(createChallenge);
+router.get("/leaderboard", getChallengeLeaderboard);
 
 // Specific routes MUST come before parameterized routes to avoid conflicts
 router.post("/join", joinChallenge);

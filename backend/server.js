@@ -12,6 +12,7 @@ import challengeRoutes from "./routes/challenges.js";
 import notificationRoutes from "./routes/notifications.js";
 import analyticsRoutes from "./routes/analytics.js";
 import ecoActionsRoutes from "./routes/ecoActions.js";
+import userRoutes from "./routes/user.js";
 
 // Import cron jobs
 import { startCronJobs } from "./jobs/reminderJob.js";
@@ -54,6 +55,7 @@ app.use("/api/challenges", challengeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/eco-actions", ecoActionsRoutes);
+app.use("/api/user", userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
