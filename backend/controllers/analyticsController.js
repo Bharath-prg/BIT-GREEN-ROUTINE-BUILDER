@@ -1,20 +1,29 @@
-import HabitLog from '../models/HabitLog.js';
-import Habit from '../models/Habit.js';
+import HabitLog from "../models/HabitLog.js";
+import Habit from "../models/Habit.js";
+import fs from "fs";
 
 // GET /api/analytics/comparison?period=week|month
 export const getComparisonAnalytics = async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      console.error(
+        "Analytics error: req.user or req.user.id is missing. Auth middleware may not be working."
+      );
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized: user not found" });
+    }
     const userId = req.user.id;
-    const period = req.query.period === 'month' ? 'month' : 'week';
+    const period = req.query.period === "month" ? "month" : "week";
     const now = new Date();
     let startCurrent, startPrev, endPrev;
 
-    if (period === 'week') {
+    if (period === "week") {
       // Start of this week (Monday)
       const day = now.getDay() || 7;
       startCurrent = new Date(now);
       startCurrent.setDate(now.getDate() - day + 1);
-      startCurrent.setHours(0,0,0,0);
+      startCurrent.setHours(0, 0, 0, 0);
       // Start of previous week
       startPrev = new Date(startCurrent);
       startPrev.setDate(startCurrent.getDate() - 7);
@@ -29,22 +38,22 @@ export const getComparisonAnalytics = async (req, res) => {
     }
 
     // Helper to format date as YYYY-MM-DD
-    const fmt = d => d.toISOString().split('T')[0];
+    const fmt = (d) => d.toISOString().split("T")[0];
 
     // Fetch logs for current and previous period
     const logsCurrent = await HabitLog.find({
       userId,
-      date: { $gte: fmt(startCurrent) }
+      date: { $gte: fmt(startCurrent) },
     });
     const logsPrev = await HabitLog.find({
       userId,
-      date: { $gte: fmt(startPrev), $lte: fmt(endPrev) }
+      date: { $gte: fmt(startPrev), $lte: fmt(endPrev) },
     });
 
     // Calculate completion rates
-    const doneCurrent = logsCurrent.filter(l => l.status === 'done').length;
+    const doneCurrent = logsCurrent.filter((l) => l.status === "done").length;
     const totalCurrent = logsCurrent.length;
-    const donePrev = logsPrev.filter(l => l.status === 'done').length;
+    const donePrev = logsPrev.filter((l) => l.status === "done").length;
     const totalPrev = logsPrev.length;
     const rateCurrent = totalCurrent ? (doneCurrent / totalCurrent) * 100 : 0;
     const ratePrev = totalPrev ? (donePrev / totalPrev) * 100 : 0;
@@ -56,16 +65,17 @@ export const getComparisonAnalytics = async (req, res) => {
     for (const h of habits) catMap[h._id] = h.category;
     const catStats = {};
     for (const log of logsCurrent) {
-      const cat = catMap[log.habitId?.toString()] || 'Other';
+      const cat = catMap[log.habitId?.toString()] || "Other";
       if (!catStats[cat]) catStats[cat] = { done: 0, total: 0 };
       catStats[cat].total++;
-      if (log.status === 'done') catStats[cat].done++;
+      if (log.status === "done") catStats[cat].done++;
     }
     for (const log of logsPrev) {
-      const cat = catMap[log.habitId?.toString()] || 'Other';
+      const cat = catMap[log.habitId?.toString()] || "Other";
       if (!catStats[cat]) catStats[cat] = { done: 0, total: 0 };
       // Only add prev period stats if not already present
-      catStats[cat].prevDone = (catStats[cat].prevDone || 0) + (log.status === 'done' ? 1 : 0);
+      catStats[cat].prevDone =
+        (catStats[cat].prevDone || 0) + (log.status === "done" ? 1 : 0);
       catStats[cat].prevTotal = (catStats[cat].prevTotal || 0) + 1;
     }
 
@@ -78,14 +88,14 @@ export const getComparisonAnalytics = async (req, res) => {
           start: fmt(startCurrent),
           done: doneCurrent,
           total: totalCurrent,
-          rate: rateCurrent
+          rate: rateCurrent,
         },
         previous: {
           start: fmt(startPrev),
           end: fmt(endPrev),
           done: donePrev,
           total: totalPrev,
-          rate: ratePrev
+          rate: ratePrev,
         },
         diff,
         categories: Object.entries(catStats).map(([cat, stats]) => ({
@@ -93,18 +103,37 @@ export const getComparisonAnalytics = async (req, res) => {
           current: {
             done: stats.done,
             total: stats.total,
-            rate: stats.total ? (stats.done / stats.total) * 100 : 0
+            rate: stats.total ? (stats.done / stats.total) * 100 : 0,
           },
           previous: {
             done: stats.prevDone || 0,
             total: stats.prevTotal || 0,
-            rate: stats.prevTotal ? (stats.prevDone || 0) / stats.prevTotal * 100 : 0
-          }
-        }))
-      }
+            rate: stats.prevTotal
+              ? ((stats.prevDone || 0) / stats.prevTotal) * 100
+              : 0,
+          },
+        })),
+      },
     });
   } catch (error) {
-    console.error('Analytics error:', error);
-    res.status(500).json({ success: false, message: 'Analytics error' });
+    const errorMsg = `[${new Date().toISOString()}] Analytics error: ${
+      error?.message
+    }\n${error?.stack}\n`;
+    try {
+      fs.appendFileSync("analytics-error.log", errorMsg);
+    } catch (e) {
+      console.error("Failed to write analytics error log:", e);
+    }
+    console.error("Analytics error:", error);
+    if (error && error.stack) {
+      console.error(error.stack);
+    }
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Analytics error",
+        error: error?.message,
+      });
   }
 };
