@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
 import HabitCard from "../components/HabitCard";
+import HabitDeleteDialog from "../components/HabitDeleteDialog";
 import api from "../utils/api";
 import { useLocation } from "react-router-dom";
 
 const Habits = () => {
   const [showModal, setShowModal] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    habitId: null,
+    habitTitle: "",
+    challenges: []
+  });
   const location = useLocation();
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,15 +73,47 @@ const Habits = () => {
   };
 
   const handleDelete = async (habitId) => {
-    if (!window.confirm("Are you sure you want to delete this habit?")) return;
-
     try {
-      await api.delete(`/habits/${habitId}`);
+      // First, try to delete without force flag to check for active challenges
+      const response = await api.delete(`/habits/${habitId}`);
+      
+      // If successful, no active challenges exist
       fetchHabits();
     } catch (error) {
       console.error("Error deleting habit:", error);
-      alert("Failed to delete habit");
+      
+      // Check if error is due to active challenges (409 status)
+      if (error.response && error.response.status === 409 && error.response.data.hasActiveChallenges) {
+        // Find the habit to get its title
+        const habit = habits.find(h => h._id === habitId);
+        
+        // Show custom dialog with challenge information
+        setDeleteDialog({
+          isOpen: true,
+          habitId: habitId,
+          habitTitle: habit?.title || "this habit",
+          challenges: error.response.data.challenges || []
+        });
+      } else {
+        alert("Failed to delete habit");
+      }
     }
+  };
+
+  const handleDeleteBoth = async () => {
+    try {
+      // Force delete with query parameter
+      await api.delete(`/habits/${deleteDialog.habitId}?forceDelete=true`);
+      setDeleteDialog({ isOpen: false, habitId: null, habitTitle: "", challenges: [] });
+      fetchHabits();
+    } catch (error) {
+      console.error("Error force deleting habit:", error);
+      alert("Failed to delete habit and challenges");
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialog({ isOpen: false, habitId: null, habitTitle: "", challenges: [] });
   };
 
   const filteredHabits =
@@ -254,6 +293,15 @@ const Habits = () => {
           </div>
         </div>
       )}
+
+      {/* Habit Delete Dialog */}
+      <HabitDeleteDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={handleCancelDelete}
+        onDeleteBoth={handleDeleteBoth}
+        habitTitle={deleteDialog.habitTitle}
+        challenges={deleteDialog.challenges}
+      />
     </div>
   );
 };

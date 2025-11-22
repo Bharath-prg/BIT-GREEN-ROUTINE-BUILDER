@@ -1,4 +1,5 @@
 import Habit from '../models/Habit.js'
+import ChallengeProgress from '../models/ChallengeProgress.js'
 
 // @desc    Create new habit
 // @route   POST /api/habits
@@ -134,6 +135,8 @@ export const updateHabit = async (req, res) => {
 // @access  Private
 export const deleteHabit = async (req, res) => {
   try {
+    const { forceDelete } = req.query; // Check if force delete is requested
+
     const habit = await Habit.findOne({
       _id: req.params.id,
       userId: req.user.id
@@ -146,13 +149,51 @@ export const deleteHabit = async (req, res) => {
       })
     }
 
-    // Archive instead of delete
+    // Check if habit has active streak challenges
+    const activeChallenges = await ChallengeProgress.find({
+      habitId: habit._id,
+      userId: req.user.id,
+      status: 'active'
+    }).populate('challengeId')
+
+    // If active challenges exist and not force delete, return warning
+    if (activeChallenges.length > 0 && forceDelete !== 'true') {
+      return res.status(409).json({
+        success: false,
+        message: 'This habit has active streak challenges',
+        hasActiveChallenges: true,
+        challenges: activeChallenges.map(cp => ({
+          challengeId: cp.challengeId._id,
+          challengeTitle: cp.challengeId.title,
+          completedDays: cp.completedDays,
+          durationDays: cp.challengeId.durationDays
+        }))
+      })
+    }
+
+    // If force delete, also delete/fail the associated challenges
+    if (forceDelete === 'true' && activeChallenges.length > 0) {
+      await ChallengeProgress.updateMany(
+        {
+          habitId: habit._id,
+          userId: req.user.id,
+          status: 'active'
+        },
+        {
+          status: 'failed'
+        }
+      )
+    }
+
+    // Archive the habit
     habit.archived = true
     await habit.save()
 
     res.status(200).json({
       success: true,
-      message: 'Habit archived successfully',
+      message: forceDelete === 'true' 
+        ? 'Habit and associated challenges deleted successfully' 
+        : 'Habit archived successfully',
       data: {}
     })
   } catch (error) {

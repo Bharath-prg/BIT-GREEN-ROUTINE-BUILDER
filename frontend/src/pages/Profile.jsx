@@ -10,6 +10,11 @@ const Profile = () => {
     ecoScore: 0,
     memberSince: null,
   });
+  const [settings, setSettings] = useState({
+    emailReminders: true,
+    darkMode: false,
+    timezone: 'UTC'
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,6 +28,14 @@ const Profile = () => {
       // Fetch user profile
       const userRes = await api.get("/auth/me");
       setUser(userRes.data.data);
+
+      // Fetch user settings
+      const settingsRes = await api.get("/user/settings");
+      setSettings(settingsRes.data.settings || {
+        emailReminders: true,
+        darkMode: false,
+        timezone: 'UTC'
+      });
 
       // Fetch habits count
       const habitsRes = await api.get("/habits");
@@ -46,6 +59,22 @@ const Profile = () => {
       console.error("Error fetching profile data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSettingChange = async (key, value) => {
+    try {
+      const updatedSettings = { ...settings, [key]: value };
+      setSettings(updatedSettings);
+
+      // Update settings on backend
+      await api.put("/user/settings", updatedSettings);
+      
+      console.log(`Setting ${key} updated to:`, value);
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      // Revert on error
+      setSettings(settings);
     }
   };
 
@@ -96,9 +125,6 @@ const Profile = () => {
             </p>
             <div className="flex space-x-2 mt-3">
               <span className="badge badge-success">Eco Warrior</span>
-              <span className="badge bg-orange-100 text-orange-800">
-                7-Day Streak
-              </span>
             </div>
           </div>
           <button className="btn-secondary">Edit Profile</button>
@@ -184,18 +210,28 @@ const Profile = () => {
                 Receive daily habit reminders via email
               </p>
             </div>
-            <input type="checkbox" className="w-12 h-6" defaultChecked />
+            <input 
+              type="checkbox" 
+              className="w-12 h-6" 
+              checked={settings.emailReminders}
+              onChange={(e) => handleSettingChange('emailReminders', e.target.checked)}
+            />
           </div>
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
             <div>
               <p className="font-semibold text-gray-900 dark:text-white">
-                Browser Notifications
+                Dark Mode
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Get push notifications in your browser
+                Enable dark mode theme
               </p>
             </div>
-            <input type="checkbox" className="w-12 h-6" />
+            <input 
+              type="checkbox" 
+              className="w-12 h-6"
+              checked={settings.darkMode}
+              onChange={(e) => handleSettingChange('darkMode', e.target.checked)}
+            />
           </div>
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
             <div>
@@ -206,10 +242,16 @@ const Profile = () => {
                 Set your local timezone
               </p>
             </div>
-            <select className="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg">
-              <option>UTC-5 (EST)</option>
-              <option>UTC-8 (PST)</option>
-              <option>UTC+0 (GMT)</option>
+            <select 
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
+              value={settings.timezone}
+              onChange={(e) => handleSettingChange('timezone', e.target.value)}
+            >
+              <option value="UTC">UTC (GMT)</option>
+              <option value="America/New_York">EST (UTC-5)</option>
+              <option value="America/Los_Angeles">PST (UTC-8)</option>
+              <option value="Europe/London">London (GMT)</option>
+              <option value="Asia/Kolkata">IST (UTC+5:30)</option>
             </select>
           </div>
         </div>
