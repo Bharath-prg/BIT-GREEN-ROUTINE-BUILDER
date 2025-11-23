@@ -1,6 +1,10 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 import connectDB from "./config/db.js";
 import { ensureDefaultChallenges } from "./utils/ensureDefaultChallenges.js";
 
@@ -16,9 +20,6 @@ import userRoutes from "./routes/user.js";
 
 // Import cron jobs
 import { startCronJobs } from "./jobs/reminderJob.js";
-
-// Load environment variables
-dotenv.config();
 
 // Initialize Express app
 const app = express();

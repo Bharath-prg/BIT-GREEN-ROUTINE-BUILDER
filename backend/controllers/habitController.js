@@ -6,7 +6,7 @@ import ChallengeProgress from '../models/ChallengeProgress.js'
 // @access  Private
 export const createHabit = async (req, res) => {
   try {
-    const { title, category, frequency, reminderTime, impactLevel } = req.body
+    const { title, category, frequency, reminderTime, impactLevel, reminderTimezone } = req.body
 
     // Validate required fields
     if (!title || !category) {
@@ -22,7 +22,8 @@ export const createHabit = async (req, res) => {
       category,
       frequency: frequency || 'Daily',
       reminderTime: reminderTime || '09:00',
-      impactLevel: impactLevel || 'Medium'
+      impactLevel: impactLevel || 'Medium',
+      reminderTimezone: reminderTimezone || 'UTC'
     })
 
     res.status(201).json({
@@ -110,9 +111,15 @@ export const updateHabit = async (req, res) => {
       })
     }
 
+    // Accept reminderTimezone from request body
+    const updateData = { ...req.body };
+    if (req.body.reminderTimezone) {
+      updateData.reminderTimezone = req.body.reminderTimezone;
+    }
+
     habit = await Habit.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     )
 

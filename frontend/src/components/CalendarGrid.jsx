@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { formatDateForAPI } from '../utils/helpers'
 import api from '../utils/api'
+import { useAuth } from '../hooks/useAuth'
 
 const CalendarGrid = ({ logs = [] }) => {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)

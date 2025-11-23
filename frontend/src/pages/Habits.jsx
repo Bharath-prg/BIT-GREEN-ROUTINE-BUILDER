@@ -56,7 +56,13 @@ const Habits = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/habits", formData);
+      // Get device timezone
+      const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      await api.post("/habits", {
+        ...formData,
+        reminderTimezone: deviceTimezone
+      });
       setShowModal(false);
       setFormData({
         title: "",

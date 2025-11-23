@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
 import { getBadgeIcon } from "../utils/helpers";
+import { useAuth } from "../hooks/useAuth";
 
 const Profile = () => {
+  const { user: authUser, refreshUser } = useAuth();
   const [user, setUser] = useState(null);
   const [badges, setBadges] = useState([]);
   const [stats, setStats] = useState({
@@ -12,14 +14,23 @@ const Profile = () => {
   });
   const [settings, setSettings] = useState({
     emailReminders: true,
-    darkMode: false,
-    timezone: 'UTC'
+    darkMode: false
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProfileData();
   }, []);
+
+  // Sync local settings with authUser whenever it changes
+  useEffect(() => {
+    if (authUser?.settings) {
+      setSettings({
+        emailReminders: authUser.settings.emailReminders ?? true,
+        darkMode: authUser.settings.darkMode ?? false
+      });
+    }
+  }, [authUser]);
 
   const fetchProfileData = async () => {
     try {
@@ -33,8 +44,7 @@ const Profile = () => {
       const settingsRes = await api.get("/user/settings");
       setSettings(settingsRes.data.settings || {
         emailReminders: true,
-        darkMode: false,
-        timezone: 'UTC'
+        darkMode: false
       });
 
       // Fetch habits count
@@ -48,7 +58,10 @@ const Profile = () => {
         ecoScore: userRes.data.data.ecoScoreTotal || 0,
         memberSince: new Date(userRes.data.data.createdAt).toLocaleDateString(
           "en-US",
-          { month: "short", year: "numeric" }
+          { 
+            month: "short", 
+            year: "numeric"
+          }
         ),
       });
 
@@ -65,10 +78,15 @@ const Profile = () => {
   const handleSettingChange = async (key, value) => {
     try {
       const updatedSettings = { ...settings, [key]: value };
+
+      // Update local UI immediately for responsive feel
       setSettings(updatedSettings);
 
       // Update settings on backend
       await api.put("/user/settings", updatedSettings);
+      
+      // Refresh global user state
+      await refreshUser();
       
       console.log(`Setting ${key} updated to:`, value);
     } catch (error) {
@@ -232,27 +250,6 @@ const Profile = () => {
               checked={settings.darkMode}
               onChange={(e) => handleSettingChange('darkMode', e.target.checked)}
             />
-          </div>
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-white">
-                Timezone
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Set your local timezone
-              </p>
-            </div>
-            <select 
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
-              value={settings.timezone}
-              onChange={(e) => handleSettingChange('timezone', e.target.value)}
-            >
-              <option value="UTC">UTC (GMT)</option>
-              <option value="America/New_York">EST (UTC-5)</option>
-              <option value="America/Los_Angeles">PST (UTC-8)</option>
-              <option value="Europe/London">London (GMT)</option>
-              <option value="Asia/Kolkata">IST (UTC+5:30)</option>
-            </select>
           </div>
         </div>
       </div>

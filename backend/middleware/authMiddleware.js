@@ -51,7 +51,9 @@ export const protect = async (req, res, next) => {
         });
       }
       // Attach user ID to request object
-      req.user = { id: decoded.id };
+      req.user = {
+        id: decoded.id
+      };
       next();
     } catch (error) {
       const errorMsg = `[${new Date().toISOString()}] Auth error: ${

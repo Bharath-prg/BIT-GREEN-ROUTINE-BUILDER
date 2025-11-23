@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
 import { formatDateForAPI } from "../utils/helpers";
+import { useAuth } from "../hooks/useAuth";
 
 const Dashboard = () => {
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
     dailyEcoScore: 0,

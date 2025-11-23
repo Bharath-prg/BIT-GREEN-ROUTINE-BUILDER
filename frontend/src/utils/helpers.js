@@ -3,7 +3,7 @@ export const formatDate = (date) => {
   return new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
-    day: "numeric",
+    day: "numeric"
   });
 };
 
@@ -18,13 +18,15 @@ export const formatDateForAPI = (date) => {
 export const formatTime = (date) => {
   return new Date(date).toLocaleTimeString("en-US", {
     hour: "2-digit",
-    minute: "2-digit",
+    minute: "2-digit"
   });
 };
 
 export const formatRelativeTime = (date) => {
   const now = new Date();
-  const diff = now - new Date(date);
+  const targetDate = new Date(date);
+  
+  const diff = now - targetDate;
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);

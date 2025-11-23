@@ -4,42 +4,46 @@ import Habit from "../models/Habit.js";
 import { sendNotificationWithEmail } from "../services/notificationService.js";
 import { weeklyChallengeJob } from "./weeklyChallengeJob.js";
 
-// Helper to format time for comparison (HH:MM format)
-const formatTime = (date) => {
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-};
-
 // Daily reminder job - runs every minute to check for habits due
 export const dailyReminderJob = cron.schedule(
   "* * * * *",
   async () => {
     try {
-      const currentTime = formatTime(new Date());
-      console.log(`[Reminder Job] Running at ${currentTime}`);
+      console.log(`[Reminder Job] Running at ${new Date().toISOString()}`);
 
-      // Find all active habits with reminders set for current time
+      // Find all active habits with reminders enabled
       const habits = await Habit.find({
         archived: false,
         reminderTime: { $exists: true, $ne: null },
+        reminderTimezone: { $exists: true, $ne: null }
       }).populate("userId", "name email settings");
 
+      console.log(`[Reminder Job] Found ${habits.length} habits with reminders`);
+
       for (const habit of habits) {
-        // Check if habit's reminder time matches current time (within 1 minute window)
-        if (
-          habit.reminderTime === currentTime ||
-          habit.reminderTime ===
-            `${currentTime.split(":")[0]}:${(
-              parseInt(currentTime.split(":")[1]) - 1
-            )
-              .toString()
-              .padStart(2, "0")}`
-        ) {
-          // Check if user has email reminders enabled
-          if (habit.userId && habit.userId.settings?.emailReminders) {
+        try {
+          // Skip if user doesn't exist or email reminders disabled
+          if (!habit.userId || !habit.userId.settings?.emailReminders) {
+            continue;
+          }
+
+          // Get habit's reminder timezone (from device)
+          const habitTimezone = habit.reminderTimezone;
+          
+          // Convert current server time to habit's timezone
+          const localTimeStr = new Date().toLocaleString("en-US", {
+            timeZone: habitTimezone,
+            hour12: false
+          });
+          const localTime = new Date(localTimeStr);
+          
+          // Extract HH:MM from local time
+          const currentHHMM = localTime.toTimeString().slice(0, 5);
+          
+          // Check if current time matches habit's reminder time
+          if (currentHHMM === habit.reminderTime) {
             console.log(
-              `[Reminder Job] Sending reminder for habit: ${habit.title} to user: ${habit.userId.name}`
+              `[Reminder Job] ✓ Sending reminder for habit: "${habit.title}" to ${habit.userId.email} (${habitTimezone} time: ${currentHHMM})`
             );
 
             await sendNotificationWithEmail(habit.userId, "reminder", {
@@ -49,6 +53,11 @@ export const dailyReminderJob = cron.schedule(
               message: `Time to complete your eco-habit: ${habit.title}`,
             });
           }
+        } catch (habitError) {
+          console.error(
+            `[Reminder Job] Error processing habit ${habit._id}:`,
+            habitError.message
+          );
         }
       }
     } catch (error) {

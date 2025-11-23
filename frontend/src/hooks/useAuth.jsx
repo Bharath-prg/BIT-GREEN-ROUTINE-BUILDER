@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { authAPI } from "../utils/api";
 import { storage } from "../utils/helpers";
+import api from "../utils/api";
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -21,7 +22,10 @@ export const AuthProvider = ({ children }) => {
     const userData = storage.get("user");
 
     if (token && userData) {
-      setUser(userData);
+      setUser({
+        ...userData,
+        settings: userData.settings || {}
+      });
       setIsAuthenticated(true);
     }
     setLoading(false);
@@ -36,8 +40,19 @@ export const AuthProvider = ({ children }) => {
       storage.set("token", token);
       storage.set("user", userData);
 
-      setUser(userData);
+      setUser({
+        ...userData,
+        settings: userData.settings || {}
+      });
       setIsAuthenticated(true);
+
+      // Auto-detect and send device timezone for accurate reminders
+      try {
+        const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        await api.put("/user/settings", { timezone: deviceTimezone });
+      } catch (tzError) {
+        console.error("Failed to update timezone:", tzError);
+      }
 
       return { success: true };
     } catch (error) {
@@ -58,8 +73,19 @@ export const AuthProvider = ({ children }) => {
       storage.set("token", token);
       storage.set("user", newUser);
 
-      setUser(newUser);
+      setUser({
+        ...newUser,
+        settings: newUser.settings || {}
+      });
       setIsAuthenticated(true);
+
+      // Auto-detect and send device timezone for accurate reminders
+      try {
+        const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        await api.put("/user/settings", { timezone: deviceTimezone });
+      } catch (tzError) {
+        console.error("Failed to update timezone:", tzError);
+      }
 
       return { success: true };
     } catch (error) {
@@ -87,7 +113,24 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     storage.set("user", userData);
-    setUser(userData);
+    setUser({
+      ...userData,
+      settings: userData.settings || {}
+    });
+  };
+
+  const refreshUser = async () => {
+    try {
+      const res = await api.get("/auth/me");
+      const userData = res.data.data;
+      storage.set("user", userData);
+      setUser({
+        ...userData,
+        settings: userData.settings || {}
+      });
+    } catch (e) {
+      console.error("Failed to refresh user", e);
+    }
   };
 
   const value = {
@@ -98,6 +141,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     updateUser,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

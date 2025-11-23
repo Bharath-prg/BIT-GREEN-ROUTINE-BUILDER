@@ -1,13 +1,50 @@
 import nodemailer from 'nodemailer'
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS // Use Gmail App Password
+// Transporter will be created on first use
+let transporter = null;
+
+// Function to create/get transporter (lazy initialization)
+const getTransporter = () => {
+  if (!transporter) {
+    // Debug: Log environment variables
+    console.log('📧 Creating Email Transporter:');
+    console.log('EMAIL_HOST:', process.env.EMAIL_HOST || 'NOT SET');
+    console.log('EMAIL_PORT:', process.env.EMAIL_PORT || 'NOT SET');
+    console.log('EMAIL_USER:', process.env.EMAIL_USER || 'NOT SET');
+    console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? `SET (${process.env.EMAIL_PASS.length} chars)` : 'NOT SET');
+    console.log('---');
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      throw new Error('EMAIL_USER and EMAIL_PASS must be set in .env file');
+    }
+
+    // Create transporter with explicit configuration
+    transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Verify transporter configuration
+    transporter.verify(function (error, success) {
+      if (error) {
+        console.error('❌ Email transporter verification failed:', error.message);
+        console.error('Please check your EMAIL_USER and EMAIL_PASS in .env file');
+      } else {
+        console.log('✅ Email server is ready to send messages');
+      }
+    });
   }
-})
+  
+  return transporter;
+};
 
 // Email templates
 const emailTemplates = {
@@ -109,6 +146,9 @@ const emailTemplates = {
 // Send email function
 export const sendEmail = async (to, templateType, templateData) => {
   try {
+    // Get transporter (will create if not exists)
+    const transporter = getTransporter();
+
     const template = emailTemplates[templateType]
     if (!template) {
       throw new Error(`Email template '${templateType}' not found`)
@@ -123,11 +163,13 @@ export const sendEmail = async (to, templateType, templateData) => {
       html
     }
 
+    console.log(`📧 Attempting to send email to: ${to}`)
     const info = await transporter.sendMail(mailOptions)
-    console.log(`Email sent: ${info.messageId}`)
+    console.log(`✅ Email sent successfully: ${info.messageId}`)
     return { success: true, messageId: info.messageId }
   } catch (error) {
-    console.error('Email sending error:', error)
+    console.error('❌ Email sending error:', error.message)
+    console.error('Full error:', error)
     return { success: false, error: error.message }
   }
 }

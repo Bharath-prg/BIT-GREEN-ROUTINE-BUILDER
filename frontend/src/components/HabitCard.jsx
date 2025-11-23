@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { useAuth } from '../hooks/useAuth'
 
 const HabitCard = ({ habit, onDelete, onUpdate }) => {
+  const { user } = useAuth();
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [habitLogs, setHabitLogs] = useState([])
   const [stats, setStats] = useState({
@@ -227,7 +229,7 @@ const HabitCard = ({ habit, onDelete, onUpdate }) => {
                             {new Date(log.date).toLocaleDateString('en-US', { 
                               weekday: 'short', 
                               month: 'short', 
-                              day: 'numeric' 
+                              day: 'numeric'
                             })}
                           </span>
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${

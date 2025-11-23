@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { useAuth } from '../hooks/useAuth'
 
 const Notifications = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([])
   const [filter, setFilter] = useState('All')
   const [loading, setLoading] = useState(true)
@@ -122,7 +124,7 @@ const Notifications = () => {
                           month: 'short', 
                           day: 'numeric', 
                           hour: '2-digit', 
-                          minute: '2-digit' 
+                          minute: '2-digit'
                         })}
                       </p>
                     </div>

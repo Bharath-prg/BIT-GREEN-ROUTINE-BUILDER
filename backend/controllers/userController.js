@@ -5,7 +5,7 @@ import User from '../models/User.js'
 // @access  Private
 export const updateSettings = async (req, res) => {
   try {
-    const { emailReminders, darkMode, timezone } = req.body
+    const { emailReminders, darkMode } = req.body
 
     // Find user
     const user = await User.findById(req.user._id)
@@ -23,9 +23,6 @@ export const updateSettings = async (req, res) => {
     }
     if (darkMode !== undefined) {
       user.settings.darkMode = darkMode
-    }
-    if (timezone !== undefined) {
-      user.settings.timezone = timezone
     }
 
     await user.save()

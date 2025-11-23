@@ -25,6 +25,10 @@ const habitSchema = new mongoose.Schema({
     type: String,
     default: '09:00'
   },
+  reminderTimezone: {
+    type: String,
+    default: null
+  },
   impactLevel: {
     type: String,
     default: 'Medium',
